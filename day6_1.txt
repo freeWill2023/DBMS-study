@@ -1,0 +1,1755 @@
+ID: st04
+PW: st04
+host name : 125.141.133.87
+port : 1521
+SID 접속식별자 : xe
+----------------------------------------------------------
+
+--EMP schema 스키마
+EMPLOYEE_ID	사번
+FIRST_NAME
+LAST_NAME
+EMAIL
+PHONE_NUMBER
+HIRE_DATE           입사일
+JOB_ID		직군
+SALARY
+COMMISSION_PCT	수당률,판매직
+MANAGER_ID	직속상관 사번
+DEPARTMENT_ID	부서부서 번호
+---------------------------------------------------------
+
+# SQL day 2------------------------------------------------
+정렬
+쿼리문의 마지막 기술
+order by 컬럼명, 컬럼명[옵션],.....
+order by 컬럼명, 인덱스[옵션],.....=>사용 빈도 높음
+실행속도 악영향!!(정렬은 연산 리소스 높음) 
+->오름차순: 기본 asc
+->내림차순: desc
+
+select last_name, hire_date
+from emp
+where hire_date < '05/01/01'
+order by hire_date;
+
+select last_name, hire_date
+from emp
+where hire_date < '05/01/01'
+order by hire_date desc;
+
+인덱스: 1,2,3.....
+select last_name, hire_date
+from emp
+where hire_date < '05/01/01'
+order by 2;
+
+부서번호(오름), 월급(오름), 이름(내림)순으로 검색
+select last_name, DEPARTMENT_ID, saladry
+from emp
+order by 2, 3 desc, 1;
+
+# 쿼리 실행 순서
+from -> where -> select -> order by
+from -> where -> group by -> having -> select
+-> order by
+
+--이 외에 자주 사용되는 연산자
+- between 값1 and 값2
+- in
+- like
+- is NULL
+- not
+
+--between 값1 and 값2 범위 검색
+-값1: 최소값, 값2: 최대값
+-값1, 값2 모두 포함
+10000~15000 사이의 사원명과 급여
+select last_name, salary
+from emp
+where salary between 10000 and 15000;
+where salary not between 10000 and 15000;
+
+-- in
+- 목록에서 비교
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID =60 or DEPARTMENT_ID =30;
+
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID in(60, 30);
+where DEPARTMENT_ID not in(60, 30);
+
+--like
+-패턴 검색, 문자 검색에 사용
+-% : 여러문자
+-_ : 한 문자 대신
+select last_name, email
+from emp
+where email like 'S%' ;
+where email not like 'S%' ;
+
+select last_name, email
+from emp
+where email like '%S% or email like '%k%' ;
+
+select last_name, email
+from emp
+where email like '____' ;
+
+select last_name, email
+from emp
+where email like 'S_I%' ;
+
+--is (=)
+-null 값 비교시 is 연산자 사용
+
+select last_name, salary, COMMISSION_PCT
+from emp
+where COMMISSION_PCT is null;
+where COMMISSION_PCT is not null;
+
+##함수
+- 기능 수행 명령문
+- 함수명(인수, 인수...) 인수 개수는 함수에 따라 다름
+
+#함수: 단일행 함수, 다중행 함수
+-단일행 함수: 하나의 행에 대한 컬럼값 처리
+-다중행 함수: 여러행의 컬럼값 처리
+
+#문자 단일행 함수
+-대문자, 소문자, 처문자만 대문자
+
+select upper(email), lower(email), initcap(email)
+from emp;
+
+-SKING검색
+-where절에서 컬럼은 인덱스 역할
+
+select email, last_name, salary
+from emp
+where email = upper('sking');
+(where의 인덱스==email) 풀 스캔 방지
+
+# length
+-컬럼의 길이-> 숫자(byte==8bit)
+-영문자, 한글, 특수문자, 공백, 숫자 모두 1자 원칙
+
+select email, length(email)
+from emp;
+
+select length('12가나다$%^&* 7')
+from dual;
+(dual: 임시 테이블)
+
+select sysdate
+from dual;
+
+#substr
+-문자 컬럼의 일부 문자만 가져오기
+-substr(컬럼명, 시작위치, 가져올 문자개수)
+
+select email, substr(email, 1, 2), substr(email, -2)
+from emt;
+
+주민번호만 남자만 검색
+select *
+from emp
+where substr(주민번호, 8, 1) in ('1', '3');
+where substr(주민면호, 3, 2) = '07'
+
+#instr(컬럼명, 문자, 시작위치, 몇번째)
+-해당 문장의 시작 인덱스
+-찾는 문자가 없으면 '0'리턴
+
+select email, instr(email, 'S')
+from emp;
+
+select email, instr(email, 'S', 1, 2)
+from emp;
+
+#문제
+job_id컬럼에서 '_'이 후 두 문자 추출
+select job_id, substr(job_id, instr(job_id, '_'), 2)
+from emp;
+
+select job_id, substr(job_id, instr(job_id, '_'), -2)
+from emp;
+
+select job_id, 
+       substr(job_id, instr(job_id, '_'), 2) as "_뒷문자",
+       substr(job_id, 1, instr(job_id, '_')) as "_앞문자"
+from emp;
+
+select job_id, 
+       substr(job_id, instr(job_id, '_')+1) as "_뒷문자",
+       substr(job_id, 1, instr(job_id, '_')-1) as "_앞문자"
+from emp;
+
+# LPAD(컬럼명, 전체사이즈, 채울문자)
+   RPAD(컬럼명, 전체사이즈, 채울문자)
+select salary, LPAD(salary, 12, '-')
+from emp;
+
+#이메일
+email SKING => SKi**
+
+select email, 
+        RPAD(substr(email, 1, 3), length(email), '*')
+from emp;
+
+#trim(컬럼명)
+-문자열의 앞뒤 공백 제거
+-문자열 사이의 공백 유지
+
+select trim('  Abfe  frge  ') from dual;
+
+select trim('A' from 'Abfe  frAe  ') from dual;
+
+------------------------------------------------------------
+## 숫자함수
+
+#round(컬럼명, 소수점 이하 표현 자릿수)
+-반올림
+0: 정수부분만 출력
+
+select round(123.4567, 0) from dual;    123
+select round(123.4567, -1) from dual;   120
+select round(123.4567, 2) from dual;    123.5
+
+#trunc(컬럼명, 소수점 이하 표현 자릿수)
+select trunc(123.4567, 0) from dual;     123
+select trunc(123.4567, -1) from dual;    120
+select trunc(123.4567, 2) from dual;      123.45
+
+## 날짜함수
+-날자: 세기, 년, 월, 일, 시, 분, 초
+-날자 연산 가능 : 일일 덧셈, 뺄셈
+select hire_date from emp;
+select hire_date, hire_date+10 from emp;
+select hire_date, hire_date+10, hire_date+20 from emp;
+
+select trunc(sysdate-to_date('1976-07-13', 'yyyy-mm-dd')) as 생존
+from emp;
+
+-add_months(월 가산)
+select hire_date, add_months(hire_date, 3) from emp;
+
+# next_day
+-next_day(날자, '요일') ==> 다음 요일의 날자 리턴
+요일: 일(1), 월(2), 화(3), 수(4), 목(5), 금(6), 토(7)
+
+select sysdate, next_day(sysdate, 4) from dual;
+
+#last_day
+-해당 날자 정보의 마지막 날자
+
+select hire_date, last_day(hire_date) from emp;
+
+# 날자 round, trunc
+-round(날자컬럼, 기준)
+-기준: yy, mm, dd
+
+select hire_date, round(hire_date, 'mm') from emp;
+select hire_date, round(hire_date, 'yy') from emp;
+
+select hire_date, trunc(hire_date, 'mm') from emp;
+
+# extract (요소 from 날자컬럼)
+-요소: year, month, day
+
+select last_name, hire_date
+from emp
+where extract(year from hire_date) =2005;
+
+------------------------------------------------------------
+
+## 형 전환 함수
+-to_char(
+ to_char(컬럼, 형식)
+
+select sysdate, to_char(sysdate, 'yy-mm-dd') from dual;
+select sysdate, to_char(sysdate, 'hh:mi:ss') from dual;
+
+select salary, to_char(salary, '$999,999)
+from emp;
+
+
+-to_date('문자', '날자패턴')
+ to_date('2000-10-10', 'yy/mm/dd')
+
+select salary, to_char(salary, '$999,999')
+from emp;
+
+select salary, to_char(salary, 'L999,999')
+from emp;
+
+select salary, to_char(salary, 'L9,999')
+from emp;
+자릿수가 모자르면 ##########
+
+# SQL day 3===============================
+
+# null 계열 함수
+-null : 아직 입력되지 않은 값
+-산술연산시 컬럼에 null포함시 결과도 null이 된다.
+ 논리연산시 상황에 따라 다름
+ (and연산시 null, or연산시 null아닐수 있음) 
+
+-nvl(컬럼명, 대체값)
+ 컬럼의 값이 null이먄 대체값으로 변경
+
+select last_name, salary,
+       salary+(salary*COMMISSION_PCT) as null
+from emp;
+
+null을 '0'으로 대체
+select last_name, salary,
+       salary+(salary*nvl(COMMISSION_PCT, 0)) as total
+from emp;
+
+-nvl2(컬럼명, 대체값1, 대체값2)
+ 대체값1: null 없을 때
+ 대체값2: null 있으면
+select last_name, salary,COMMISSION_PCT,
+       nvl2(COMMISSION_PCT, '수당있음', '수당없음') as total
+from emp;
+
+# case 문
+- ANSI 표준 문 모든 DBMS에서 사용
+-쿼리안에서 조건 역할
+
+예) 이름, 부서, 월급, 상여금 출력
+     부서별 상여 다르게 지급
+	30부서 -> 200%
+	50부서 -> 400%
+	나머지 -> 100%
+
+select last_name, DEPARTMENT_ID, salary,
+        case DEPARTMENT_ID
+                when 30 then salary*2
+                when 50 then salary*4
+        else
+            salary*1
+        end as bonus
+from emp;
+다름 표현
+select last_name, DEPARTMENT_ID, salary,
+        case
+                when DEPARTMENT_ID=30 then salary*2
+                when DEPARTMENT_ID=50 then salary*4
+        else
+            salary*1
+        end as bonus
+from emp;
+
+select last_name, DEPARTMENT_ID, salary,
+        case
+                when JOB_ID like '%clerk' then salary*2
+                when JOB_ID like '%man' then salary*4
+        else
+            salary*1
+        end as bonus
+from emp;
+
+-case문은 오라클에서 decode 전용함수 있음.
+-decode(컬럼, 조건값, 대체수식1, 대체수식2,......,else값)
+elect last_name, DEPARTMENT_ID, salary,
+        decode(DEPARTMENT_ID, 30, salary*2,
+                                          50, salary*4, salary*1) as bonus
+from emp;
+
+
+## 다중행 함수
+- sum, max, min, count, avg,...
+- null값은 제외
+
+select sum(salary)
+from emp;
+
+- count(컬럼명 또는 *)
+  열의 개수, null은 제외, (*는 row개수)
+select count(*)
+from emp;
+
+select count(*) as 총사원수, count(COMMISSION_PCT)
+from emp;
+
+-------------------------------------------------------------------
+# 그룹
+- group by 컬럼명, 컬럼명,.....
+
+부서별 평균급여, 사원수
+select DEPARTMENT_ID, avg(salary), count(*)
+from emp
+group by DEPARTMENT_ID
+order by DEPARTMENT_ID;
+
+select DEPARTMENT_ID,
+       trunc(avg(salary),0) 부서평균급여,
+       count(*) as 사원수
+from emp
+group by DEPARTMENT_ID
+order by DEPARTMENT_ID;
+
+-select절에 일반 컬럼은 group by 에 기술-
+
+select DEPARTMENT_ID, job_id,
+       count(*) as 사원수
+from emp
+group by DEPARTMENT_ID, job_id
+order by DEPARTMENT_ID;
+
+-년도별 입사사원수-
+select extect(year from HIRE_DATE), 
+        count(*)
+from emp
+group by extect(year from HIRE_DATE)
+order by 1;
+
+select to_char(HIRE_DATE, 'yyyy') as 년도,
+        count(*) as 년도별사원수
+from emp
+group by to_char(HIRE_DATE, 'yyyy')
+order by 1;
+
+-사무직, 년도별 입사 사원수-
+select to_char(HIRE_DATE, 'yyyy') as 년도,
+        count(*) as 년도별사원수
+from emp
+where job_id like '%CLERK'
+group by to_char(HIRE_DATE, 'yyyy')
+order by 1;
+
+# 그룹을 제한
+-원하는 그룹 출력
+-having 조건문 and 조건문
+-단독사용 안됨
+
+select to_char(HIRE_DATE, 'yyyy') as 년도,
+        count(*) as 년도별사원수
+from emp
+group by to_char(HIRE_DATE, 'yyyy')
+having count(*) >= 10
+order by 1;
+
+-where: 행에 대한 조건
+-having: 열에 대한 조건(그룹열에 대한 조건)
+
+-스키마: 주문[주문번호, 주문자, 주문상품, 개수, 주문금액, 주문일]
+-문제 조건: 올 해 주문자료만 있는 테이블에서
+1. 월별 주문금액 합계
+select to_char(주문일, 'mm'), sum(주문금액)
+from 주문
+group by to_char(주문일, 'mm')
+
+select extract(month from 주문일) as 월
+         sum(주문금액) as 월매출액
+from 주문
+select extract(month from 주문일)
+order by 1;
+
+2. 100개 이상 팔린 상품, 주문 총개수
+select 주문상품, sum(개수)
+from 주문
+group by 주문상품
+having 개수 >= 100;
+
+select 주문상품,
+        sum(개수), 상품별총개수
+from 주문
+group by 주문상품
+having sum(개수) >= 100
+order by 2 desc;
+
+3. 5번 이상 주문한 주문자와 주문횟수
+select 주문자, 개수
+from 주문
+group by 주문자
+having 개수 >= 5;
+
+select 주문자,
+        count(*) as 주문회수
+from 주문
+group by 주문자
+having count(*) >= 5
+order by 2 desc;
+
+4. 지난달 100개 이상 팔린 상품과 주문총개수
+select 주문상품,
+        sum(개수), 상품별총개수
+from 주문
+where extract(month from 주문일) = extract(month from sysdate)-1
+group by 주문상품
+having sum(개수) >= 100
+order by 2 desc;
+
+
+
+select name, birth,
+       extract(year from sysdate)-extract(year from birth) as 나이,
+       count(*) as 인원수
+from tt
+group by trunc(extract(year from sysdate)-extract(year from birth), -1);
+
+
+## join --------------------------------------------------------------------
+- 연관이 있는 테이블로부터 데이터를 검색
+-테이블과 테이블
+
+이름, 월급: emp 테이블(DEPARTMENT_ID 존재)
+부서명: dept 테이블(DEPARTMENT_ID 존재)
+
+이름, 월급, 부서명(DEPARTMENT_NAME) 검색은?
+DEPARTMENT_ID로 join하여 부서명 검색 가능
+
+(오라클 전용 join)
+select last_name, salary, department_name
+from emp, dept
+where emp.department_id=dept.department_id;
+
+-join 종류: cross join(사용 하지 않음)
+              equi join등가조인(보편 사용)
+              non equi join 비등가조인
+              outer join, 
+              self join
+
+-cross join: 조인 조건 없음, 모든 경우수로 조인, 사용 X
+select last_name, salary, department_name
+from emp, dept;
+==> 107x27 조인 경우의 수로 조인
+
+-equi join: 조인 조건 있음, where에 기입
+select last_name, salary, department_name
+from emp, dept
+where emp.department_id=dept.department_id;
+
+-outer join 외부조건: 조건을 만족하지 않는 행도 수용
+                            (equi join + non equi join)
+	-left outer join
+	-right outer join
+	-full outer join
+
+-left outer join => 실무에서 많이 사용
+select last_name, salary, department_name
+from emp(left), dept
+where emp.department_id=dept.department_id(+);
+(emp의 부서번호는 모두 나오는 것을 기준으로
+   dept의 부서번호도 모두 나오도록 한다.)
+
+-right outer join => 실무에서 많이 사용
+select last_name, salary, department_name
+from emp(left), dept
+where emp.department_id(+)=dept.department_id;
+(dept의 부서번호는 모두 나오는 것을 기준으로
+   emp의 부서번호도 모두 나오도록 한다.)
+
+=day.4============================================
+
+-non equi join 비등가조인: join 조건이 '='아님
+
+이름, 급여, 급여등급 검색
+	이름, 급여 => emp table
+	급여등급 => job_grades table
+
+select emp.last_name, emp.salary, job_grades.grade_level
+from emp, job_grades
+where emp.salary between job_grades.lowest_sal and job_grades.highest_sal;
+
+select E.last_name, E.salary, J.grade_level
+from emp E, job_grades J
+where E.salary between J.lowest_sal and J.highest_sal;
+
+-self join: 자기자신과 조인, 테이블의 별칭 기능
+
+select E.last_name, E.job_id, M.last_name
+from emp E, emp M
+where E.MANAGER_ID = M.EMPLOYEE_ID;
+
+- 성능을 고려한 조인--------------------------------------------------------
+1.테이블 별칭을 사용하여 (ex:  from emp E 테이블은 as 사용 X)
+   select절의 컬럼명 앞에 사용한다.
+2.join시 드라이브 테이블(촤측테이블, 첫 번째 테이블)은 크기가 작으면 좋다.
+  (테이블의 행길이가 적은 테이블이면 좋다.)
+   두 번째 테이블은 인덱스가 있으면 좋다.
+
+
+-cross join: 조인 조건 없음, 모든 경우수로 조인, 사용 X
+select last_name, salary, department_name
+from emp cross dept;
+
+-ANSI 표준 join: 
+  	using : 두 테이블에 같은 컬럼이 있는 경우 
+	on : 두 테이블에 같은 컬럼이 없는 경우 
+select last_name, salary, department_name
+from emp join dept using(department_id)
+
+select E.last_name, E.salary, D.department_name
+from emp E join dept D
+       on (E.department_id=D.department_id);
+
+
+
+-표준 left outer join
+select last_name, salary, department_name
+from 
+
+
+
+-여러테이블 join---------------------------------------
+A table
+select *
+from A join B on(A.aa=B.bb) join C on(A.aa=C.cc) join D on(A.aa=D.dd;)
+
+from (A join B on(A.aa=B.bb)) join (C join D on(C.cc=D.cc);
+from (A join B on(A.aa=B.bb)) join (C join D on(C.cc=D.cc);
+
+
+
+# SUB Qurey ############################################
+
+-쿼리 안의 쿼리
+-서브쿼리는 ( )를 사용한다.
+-실행순서: 서브쿼리 실행 후 결과값을 메인쿼리에 전달, 메인쿼리 실행
+-서브쿼리의 결과가 Null인 경우, 메인쿼리의 결과는 Null이 된다.
+-서브쿼리 사용 위치
+	select : 서브쿼리 => 함수 구현으로 지원(현 트랜드)
+	from : in-line 뷰=> 실행시 잠시 테이블로 구성되었다가 사라짐
+	where, having : 중첩 서브쿠ㅝ리 => 조건식의 우항에 기술
+
+select last_name, salary
+from emp
+where salary >= 10000;
+
+chen의 급여
+select salary
+from emp
+where last_name='chen' ;
+
+select last_name, salary
+from emp
+where salary >= (chen의 급여);
+
+기본 표현
+select last_name, salary
+from emp
+where salary >= (select salary
+	           from emp
+	           where last_name= 'chen' );
+
+select last_name, salary
+from emp
+where salary = (select max(salary) from emp);
+
+60번 부서의 최저 급여보다 큰 평균 급여를 가진 부서는
+
+
+select DEPARTMENT_ID, trunc(avg(salary))
+from emp
+gropb by DEPARTMENT_ID
+having avg(salary) > ()
+
+select min(salary)
+from emp
+where DEPARTMENT_ID=60;
+
+select DEPARTMENT_ID, trunc(avg(salary))
+from emp
+group by DEPARTMENT_ID
+having avg(salary) > (select min(salary)
+		   from emp
+		   where DEPARTMENT_ID=60);
+
+#top-n 알고리즘
+-from절에 table 대신 서브쿼리 사용
+
+-월급 많이 받는 10명 검색
+
+select last_name, salary
+from (select last_name, salary
+        from emp
+        order by 2 desc)
+where rownum <= 10;
+
+# 다중행 연산자
+-단일행 연산자: =, >=, <> ...
+
+select last_name, salary
+from emp
+having salary > (select min(salary)
+		   from emp
+		   where DEPARTMENT_ID=60);
+====>ORA-00979: not a GROUP BY expression
+단일 연산자 오류
+
+-다중행 연산자
+=> in(...)
+=> 단일행 연산자+any
+
+--단일행 연산자+any
+select last_name, salary
+from emp
+where salary > any (select min(salary)
+		   from emp
+		   where DEPARTMENT_ID=60);
+==> 쿼리 결과 어는 것(any)보다 크다 
+==> 61개 검색됨
+
+--단일행 연산자+all
+select last_name, salary
+from emp
+where salary > any (select min(salary)
+		   from emp
+		   where DEPARTMENT_ID=60);
+==> 쿼리 결과 모두(all)보다 크다 
+==> 23개 검색됨
+
+--in(...)
+select last_name, salary
+from emp
+where DEPARTMENT_ID in(select DEPARTMENT_ID
+		          from emp
+		          group by DEPARTMENT_ID
+		          having avg(salary) >= 9000);
+
+--with 절
+-복잡한 from절의 sub 퀴리를 간결하게 사용하기 위한 목적
+
+with
+e10 as (select * from emp where DEPARTMENT_ID=10)
+,e   as (select * from emp)
+select *
+from e10, e
+where e10.DEPARTMENT_ID = e.DEPARTMENT_ID;
+
+
+select *
+from (select * from emp where DEPARTMENT_ID=10) e10
+       ,(select * from emp) e
+where e10.DEPARTMENT_ID = e.DEPARTMENT_ID;
+
+
+#관계 데이터 모델
+* key : 릴레이션(테이블)에서 투플(row)들을 유일하게 구별하는 속성(column)
+         또는 속성들의 집합(column 집합)
+
+-key의 권한/우선 순위: 슈퍼키>>후보키>>기본키>>대체키>>외래키
+	사번 컬럼       : 기본키 primary key, 개체 무결성 제약조건
+		         (not null, unique)
+	주민 번호 컬럼: 대체키 alternate key
+	이메일           : 대체키 alternate key
+
+
+# 데이터 조작어 #########################################
+-DML : Data Manipulation Language
+-data 입력(insert), 수정(updata), 삭제(delete)
+
+-------------------------------------------------------------------------------
+st_dept(dept_no, dept_name)
+st_e(s_no, s_name, gender)
+
+create table st_dept(
+		dept_no 		number(2),
+		dept_name	varchar2(30)
+);
+
+craete table st(
+		s_no	char(8),
+		s_name	varchar2(30),
+		gender	char(1)
+);
+
+# insert
+-자료입력 1
+-insert into 테이블명(컬럼명)
+
+insert into st_dept(dept_no, dept_name) values (10, '기획부');
+insert into st_dept(dept_no, dept_name) values (20, '생산부');
+insert into st_dept(dept_no, dept_name) values (30, '판매부');
+
+insert into st(s_no, s_name) value ('20001000, '송중기', 'M');
+
+
+-자료입력 2
+-컬럼리스트 생략==> 스키마 순서대로 값을 넣을 것
+
+insert into st_dept values(40, '운영부');
+insert into st_dept values(50, null);
+
+-자료입력 3
+-테이블간 자동 이동, 컬럼 통채 복사
+insert into st_e select EMPLOYEE_ID, last_name, 'M'
+from emp
+where DEPARTMENT_ID=60;
+
+insert into st_e(s_no, s_name, gender) values ('20001000', '송중기', 'M');
+
+# update ----------------------
+-수정: 컬럼단위 수정
+-모든 값이 수정되므로 where절을 동반한다.
+-조건에 맞는 행을 수정
+
+update 테이블명
+set 컬럼명=값, ...........;
+
+-40부서 운영부 -> 자재부로 수정
+update st_dept
+set dept_name='자재부'
+where st_no=40;
+
+rollback;
+
+# delete -----------------------
+-조건에 맞는 행을 삭제
+-where절과 함께 사용
+
+delete from 테이블명;   ==>모든 행이 삭제됨
+
+delete 
+from st_e
+where s_no = 20001000 ;
+
+
+# DDL : Data Definition Language #####################
+-데이터 정의어
+-create, alter(바꾸기), drop(테이블 삭제), truncate......
+
+-오라클 데이터 타입
+-20여가지
+-문자, 숫자, 날자
+
+
+#문자
+-char(문자개수): 고정길이 문자타입, 최대 2000 byte, 기본 1 byte
+-ex) 학번, 사번, 성별, 유무.../단문자 저장 경우
+
+-varchar(n)/varchar2(n): 가변길이 문자타입, 최대 4000 byte, 기본 1 byte
+-ex) 이름, 글제목, 설명.../긴문자 저장 경우  (1 byte == 문자 1자)
+
+-long: 사용제한, 최대2G byte, 한 레코드의 1개만 지정가능
+
+-clob: long대신 사용, 최대4G byte
+
+#숫자
+-정수: number(자릿수)
+-ex) 가격 number(7) : 0~9999999
+      부서번호 number(2) : 0~99
+
+-실수: number(전체자릿수, 소수점 이하 자릿수)
+-ex) number(5, 2) : 000.00~999.99
+-     할인율 number(2, 2) : 0.00~0.99
+
+
+# 날자
+-date
+- 세기, 년, 월, 일, 시, 분, 초
+-ex) 생일, 기념일...
+
+-timestamp
+-세기, 년, 월, 일, 시, 분, 초, 밀리세컨드
+ex) log성 일자
+
+================================================
+# 테이블 생성
+
+create table st_dept(
+		dept_no 		number(2),
+		dept_name	varchar2(30)
+);
+
+create table st(
+		s_no	char(8),
+		s_name	varchar2(30),
+		gender	char
+);
+
+# 테이블 구조 변경
+-alter
+	-add: 컬럼 추가
+	-modify: 컬럼 타입, 크기 수정
+	-drop: 컬럼 삭제
+	-rename
+
+-테이블 컬럼 추가
+alter table st
+add(birth date
+   ,email varchar2(100)
+);
+
+
+-테이블 컬럼 문자 크기 수정
+alter table st
+modify(s_name	varchar2(50)
+);
+
+-테이블 컬럼 삭제
+alter table st
+drop (birth, email) ;
+
+-테이블 컬럼명 변경
+alter table st
+rename column gender to s_gender;
+
+-테이블 레코드(데이터) 추가
+insert into st values(10, 'aaa', 'f');
+insert into st values(20, 'bbb', 'f');
+insert into st values(30, 'bbb', 'm');
+insert into st values(40, 'bbb', 'm');
+
+-row열 모든 내용 삭제
+truncate table st
+
+-테이블 삭제(행-자료, 열-컬럼/스키마)
+drop table st;
+
+#삭제 명령	명령어 구분 	로그유무	취소여부	기능
+delete		DML		yes	yes	원하는 특정 row 삭제 
+truncate		DDL		no	no	모든 row 삭제
+drop		DDL		no	no	자료+스키마 삭제
+
+
+=테이블 생성- 추가 제약 조건===========================
+-p : primary key: 기본키 제약: not null unique, 반드시 입력
+-r : referenerces : 외래키 : 참조테이블의 pk중에 하나, null 가능
+-u : unique : 중복불가
+-c : check (조건식) : 조건식에 참인 것만 입력 가능, not null
+
+-default : 기본값 : null이 입렫되면 기본으로 전달해 줄 값
+
+실습
+부서(부서번호, 부서명)
+사원(사번, 이름, 생일, 성별, 이메일, 월급, 입사일, 근무부서)
+
+create table 부서(
+		부서번호 number(20)	primary key,
+		부서명	varchar2(100)	not null
+);
+
+insert into 부서 values(10, '경영부');
+insert into 부서 values(20, '회계부');
+
+	         
+create table 사원(
+		사번	number(20)	primary key,
+		이름	varchar2(50)	not null,
+		생일	date,
+		성별	char(1)		check(성별 in ('F','M')),
+		이메일	varchar2(100)	not null nuique,
+		입사일	date		default sysdate,
+		근무부서	number(2)	references 부서(부서번호)
+);
+
+insert into 사원 values(100, 'aaa', '2000/01/01', 'M', 'aaa@babo.com', '2010/10/10', 10);
+insert into 사원 values(200, 'bbb', '2003-03-20', 'a', 'bbb@babo.com', '2011/03/03', 20);
+==>오류 보고 - ORA-02290: check constraint (ST04.SYS_C00519146) violated
+==>ST04  SYS_C00519146  C 사원  성별 in ('F', 'M')
+select * 
+from user_constraints
+where table_name='사원';
+==>ST04  SYS_C00519146  C 사원  성별 in ('F', 'M')
+	(성별 입력 제약(constraint) 조건식을 따르지 않은: 오기입 문제)
+
+insert into 사원 values(300, 'ccc', '2004-03-20', 'M', 'ccc@babo.com', '2012/03/03', 50);
+==>오류 보고 - ORA-02291: integrity constraint (ST04.SYS_C00519149) violated - parent key not found
+select * 
+from user_constraints
+where table_name='사원';
+==>ST04  SYS_C00519149  R  사원  ST04  SYS_C00519137  
+	(근무부서 입력 제약(constraint) 레퍼런스/참조를 따르지 않은 문제)
+
+# 제약조건 확인
+-딕셔너리: 오라클이 만들고 유지 관리하는 것
+-제약조건 딕셔너리: user_constraints
+
+모든 스키마 제약조건 확인
+select * from user_constraints;
+
+특정 테이블 스키마 제약조건 확인
+select * from user_constraints
+where table_name = '부서';
+
+
+
+# DDL : Data Definition Language #####################
+-데이터 정의어
+-create, alter(바꾸기), drop(테이블 삭제), truncate......
+
+*테이블 관련 딕셔너리
+-user_table
+
+select *
+from user_tables;
+
+select *
+from tab;
+(트랜젝션: 작업단위 ex: 255: 255명이 개별 작업 가능함 의미)
+
+*제약조건 기술방법
+-컬럼 레벨 기술: 컬럼 옆으로 제약 기술, 
+	          반드시 컬럼에 기술 할 것들-not null
+
+-테이블 레벨 기술: 럼 밑으로 제약 기술, 
+	            기본키가 복합키인 경우(컬럼 두개를 primary key로)
+-컬럼 레벨 기술
+create table 부서(
+		부서번호 number(20)	primary key,
+		부서명	varchar2(100)	not null,
+
+		constraints 부서-pk primary_ket(부서번호)
+);
+
+-테이블 레벨 기술(컬럼 두개를 primary key로)
+create table 부서(
+		부서번호 number(20),
+		부서위치 varchar2(100),
+		부서명	varchar2(100)	not null
+
+		constraints 부서-pk primary_ket(부서번호, 부서명)
+);
+
+
+*제약조건 비활성화/활성화
+select * 
+from user_constraints
+where table_name='사원';
+(STATUS 컬럼 비활성화)
+
+alter table 사원
+disable constraints SYS_C00519145;
+==> STATUS 컬럼 : DISABLE로 변경됨
+
+alter table 사원
+enable constraints SYS_C00519145;
+
+delete from 사원
+where 성별 not in ('F' , 'M');
+
+# 테이블 생성 방법
+1. create table (스키마);  (통상)
+	-스키마 생성
+	-스키마 생성 후 자료 입력
+
+2. create table 테이블명; (스키마+제약조건+모든자료 복사)
+   as
+   select * from 유저명.테이블명;
+	-스키마+자료 복사
+	-제약조건은 not null 만 복사
+
+3. create table 테이블명; (스키마+제약조건+조건에 맞는 자료 복사)
+   as
+   select * from 유저명.테이블명
+   where 조건식;
+	-스키마+자료 복사
+	-조건에 맞는 자료+ not null 복사
+
+4. create table 테이블명; (스키마만 복사)
+   as
+   select * from 유저명.테이블명
+   where 1<>1;
+
+
+
+= day 6 =========================================
+
+create table job_history
+as
+select * from hr.job_history;
+
+# set 연산자 
+	-기본조건: 스키마(컬럼갯수, 컬럼타입)이 같아야 함
+	-컬럼명은 달라도 됨
+
+select EMPLOYEE_ID, JOB_ID
+from emp;
+(107개)
+
+select EMPLOYEE_ID
+from job_history;
+(10개)
+
+*union : 중복 불허
+-첫 번째 컬럼값으로 오름차순 자동정렬
+
+select EMPLOYEE_ID, JOB_ID
+from emp
+union
+select EMPLOYEE_ID, JOB_ID
+from job_history;
+(115개)
+
+
+-union결과 테이블로 저장
+create table union1
+as
+select EMPLOYEE_ID, JOB_ID
+from emp
+union
+select EMPLOYEE_ID, JOB_ID
+from job_history;
+
+
+-union all: 중복 허용
+-정렬 X
+-컬럼명이 다를경우=> 첫번째 검색 결과의 컬럼명이 대표 컬럼명이 됨
+
+select EMPLOYEE_ID, JOB_ID
+from emp
+union all
+select EMPLOYEE_ID as A, JOB_ID as B
+from job_history;
+(117개)
+
+*intersect : 서로 공통, 교집합, 중복 불허, null  교집합 허용
+select EMPLOYEE_ID, JOB_ID
+from emp
+intersect
+select EMPLOYEE_ID, JOB_ID
+from job_history;
+
+(ex: 현재 종사중인 직종에 과거에도 종사한 경험이 있는 직원 검색)
+
+*minus : 첫번째 스키마에서 두번째 스키마 제거
+select EMPLOYEE_ID, JOB_ID
+from emp
+minus
+select EMPLOYEE_ID, JOB_ID
+from job_history;
+
+(ex: 직종을 한 번도 변경하지 않은 직원 검색)
+
+# 트랜젝션 transaction
+	- 하나의 업무단위(업무가 시작~완료된 하나의 업무, 하나의 view화면)
+	- 업무단위: 여러개의 DML문으로 구성
+	- DDL, DCL, 여러개DML은 각각 하나의 트랜젝션이다.
+	- 특징
+	     	->원자성: 하나의 업무가 완체이어야 함(분할 불가능)
+		->일관성: 하나의 업무가 일관되어야 함(commit 여부에 따라...)
+		->독립적: 하나의 업무는 다른 유저가 개입하지 못 함(테이블의 행에는 다른 유저 개입 가능, lock 정책)
+		->영속성: 한 번의 업무가 완결되면 DB 영구 반영
+
+# 트랜젝션의 시작
+	-로그인 (ex: 로그인 -> create -> insert into -> update... -> commit)
+	-commit, rollback; 끝난 후
+	-DDL, DCL 끝난 후
+
+# 트랜젝션의 종료
+	-정상적인 로그아웃
+	-commit, rollback;
+	-DDL, DCL 이전
+
+# 트랜젝션 연산
+	-commit;		-> DB에 영구적으로 저장
+	-rollback;		-> 현재 트랜젝션 취소
+	-자동 commit;	-> 정상적인 로그아웃
+			-> DDL, DCL 이전
+	-자동 roollback;	-> 시스템의 전력적인 오류//장애
+
+(트랜젝션 완료 후 commit;을 적용하지 않으면 DB에 반영되지 않음.)
+
+-단일 트랜젝션이 길이가 긴 경우 중간에 save point 적용
+로그인
+insert into...;
+insert into...;
+update...;
+save point sp1;
+insert into...;
+insert into...;
+update...;
+save point sp2;
+insert into...;
+insert into...;
+update...;
+save point sp3;
+commit;
+
+
+
+
+= 데이터 베이스의 설계 ===============================
+
+현실 -> 개념적 모델링 -> 개념화 erd -> 논리적 모델링 -> 물리적 모델링
+
+상세 ERD를 보는법 알아야!
+
+
+# 그 밖의 내용 =====================================
+
+* view (뷰/집합)
+	-쿼리문을 저장한 객체( 사용자 정의 함수와 유사)
+	-테이블 처럼 사용가능
+
+	->보안성: 특정 테이블에 적용되는 쿼리문을 감출 수 있다.
+		접근 등급에 따라 하나의 테이블의 컬럼들을 제한
+	->편의성: 복잡한 쿼리를 간결하게 접근하기 위해 저장
+
+# view 생성
+create view 뷰명
+as
+쿼리문;
+
+create view emp_60_vu
+as
+select EMPLOYEE_ID, job_id, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID=60;
+
+* 생성된 view 보기
+select * from user_views;
+
+* view 실행
+select * from emp_60_vu;
+
+* 편의성 뷰 생성
+create view emp1_vu
+as
+select EMPLOYEE_ID, job_id, DEPARTMENT_NAME
+from emp, dept
+where emp.DEPARTMENT_ID=dept.DEPARTMENT_ID
+order by 1;
+
+select * from emp1_vu;
+
+* alter로 수정 불가
+create or replace view emp1_vu
+as
+select e.EMPLOYEE_ID, e.job_id, e.last_name, d.DEPARTMENT_NAME
+from emp as e, dept as d
+where e.DEPARTMENT_ID=d.DEPARTMENT_ID
+order by 1;
+
+drop view emp60_vu;
+
+* view DML 연산
+	-기본적으로 DML 사용 가능
+	-검색으로 목적 많으므로 읽기전용으로 만듦
+
+-테스트용 테이블 생성
+create table tt(id, name, sal)
+as
+select EMPLOYEE_ID, last_name, salary
+from emp
+where DEPARTMENT_ID=60;
+
+select * from tt;
+
+create view tt_vu
+as
+select id, name
+from tt;
+
+insert into tt_vu values(555, 'aaa');
+==> 단지 view에 의 의해서 원본 테이블에 데이터 삽입됨
+
+*읽기 전용 view로 만들기
+create or replace view tt_vu
+as
+select id, name
+from tt
+with read only;
+==>"cannot perform a DML operation on a read-only view"
+
+# 뷰의 종류
+		테이블수		DML작업		DML안되는 경우
+	-단순뷰	1		가능		함수, 그룹, distinct...
+	-복합뷰	1		불가능		
+
+# 단순뷰에서 DML 작업이 안되는 경우
+-> 원본 테이블의 컬럼 중 not null 항목을 제외한 뷰에서 DML 작업 되지 않음!
+create view emp2_vu
+as
+select DEPARTMENT_ID, count(*)
+from emp
+group by DEPARTMENT_ID
+order by 1;
+
+## 시퀀스 : sequence
+-PK를 위한 일련번호 생성기
+	-속성1: 시퀀스 이름.currval
+	-         시퀀스 이름.nextval ==> 주로 사용
+
+# 시퀀스 생성
+
+시퀀스명: 테이블_컬럼명_SEQ
+create sequence tt_pk_seq;
+==> 1~무한대까지 1씩 증가 기본 시퀀스 생성
+
+create table tt(
+		a	number(5)	primary key,
+		b	varchar2(10)
+);
+
+insert into tt values(tt_pk_seq.nextval, 'b');
+
+# 시퀀스 사용하지 않고 사용
+	-일관성이 보장 된다.
+	-시퀀스 사용시보다 속도가 늦다.
+
+create table ttt(
+		a	number(5)	primary key,
+		b	varchar2(10)
+);
+
+insert into ttt values( (select count(*)+1 from ttt), 'b');
+
+# 또 다른 시퀀스 방법
+	-주문번호: 230627_0001
+
+create table t4(
+		a	number(12)	primary key,
+		b	varchar2(10)
+);
+
+create sequence t4_pk_seq;
+
+insert into t4 values(
+	to_char(sysdate, 'yymmdd'||'_'||t4_pk_seq.valnext, 'bb');
+
+insert into t4 values(
+	to_char(sysdate, 'yymmdd'||'_'||LPAD(t4_pk_seq.valnext, 5, '0', 'bb');
+
+
+# 시노임 synonym[동의어]
+	-긴 객체 이름 편리하게 쓰기 위한 수단
+
+create synonym 시노임 이름 for 원래객체명;
+
+select * from emp;
+create synonym e for emp;
+select * from e;
+(e: emp테이블로 가기위한 링크 값)
+
+select * from tab;
+(생성된 모든 table, view, synonym... 보기)
+
+=그 외 함수=======================================
+
+## 그룹함수
+
+- 집계함수 : 그룹별 합계
+
+- 그룹함수 : 전체합계 + 그룹별 합계  => 같이 구하고자 할 경우
+
+- rollup 함수 : 전체합계, 컬럼 A 소계
+- cube 함수   : 가능한 모든 조합 - 시스템에 무리
+- grouping sets 함수  : 내가 보고 싶은 그룹에 대해서만 집계 , 전체합계 없다
+
+group by grouping sets(A) : 컬럼 A 소계
+group by grouping sets(A,B) : 컬럼 A 소계, 컬럼 B의 소계 
+
+--------------------------------------------------------------------------
+
+# ROLLUP  함수 
+
+--집계함수 :
+SELECT JOB 직무, SUM(SAL) 급여합계, COUNT(*) 인원수
+FROM EMP
+GROUP BY JOB ;
+==> JOB 소계
+
+--그룹함수 :
+SELECT JOB 직무, SUM(SAL) 급여합계, COUNT(*) 인원수
+FROM EMP
+GROUP BY ROLLUP(JOB) ;
+==> JOB 소계 , 전체합계가 나온다.
+
+SELECT DEPTNO 부서, JOB 직무, SUM(SAL) 급여합계, COUNT(*) 인원수
+FROM EMP
+GROUP BY ROLLUP( DEPTNO, JOB) ;
+==> DEPTNO별 JOB 소계 , DEPTNO 소계, 전체합계
+
+GROUP BY ROLLUP( A,B,C ) 
+==>A>B>C 소계, B+C 소계, A소계, 전체소계
+
+GROUP BY ROLLUP( A, (B,C) ) 
+==> A > (B,C) 소계, A 소계, 전체소계
+
+- GROUP BY 절에 일반컬럼과 ROLLUP 함수가 같이 있는 경우
+
+SELECT DEPTNO 부서, JOB 직무, SUM(SAL) 급여합계, COUNT(*) 인원수
+FROM EMP
+GROUP BY DEPTNO , ROLLUP(JOB) ;
+
+==> DEPTNO 그룹안에서 ROLLUP 을 실행 
+==> DEPTNO 그룹안에서 실행되므로 전체 행에대한 소계는 나타나지 않는다.
+
+# CUBE 함수  ----------------------------------------------------------------------------
+
+SELECT DEPTNO 부서, JOB 직무, SUM(SAL) 급여합계, COUNT(*) 인원수
+FROM EMP
+GROUP BY CUBE (DEPTNO, JOB) 
+ORDER BY 1,2,3,4 ;
+
+==> 모든경우의 수 (부서별 직무), 직무별, 전체 소계
+==> 현재 EMP 테이블의 자료가 적어서 볼만하지 많은 경우 의미가 없다!
+
+# GROUPING  함수  ---------------------------------------------------------------------
+
+- GROUPING(컬럼) :  그룹핑이 일어났으면 1, 아니면 0 출력
+- 후에 집계 컬럼명으로 어떠한 값을 넣고자 할 경우 , CASE 문과 조합하여 사용
+
+CASE WHEN GROUPING(A) = 1 THEN '합계' ELSE A END 
+
+SELECT DEPTNO 부서, JOB 직무, SUM(SAL) 급여합계, COUNT(*) 인원수,
+          GROUPING(DEPTNO), GROUPING(JOB)
+FROM EMP
+GROUP BY ROLLUP (DEPTNO, JOB) ;
+
+
+# GROUPING SETS 함수  -------------------------------------------------------------- 
+
+SELECT DEPTNO 부서, JOB 직무, SUM(SAL) 급여합계, COUNT(*) 인원수
+FROM EMP
+GROUP BY GROUPING SETS( DEPTNO, JOB ) 
+ORDER BY 1,2,3,4 ;
+
+==> 지저분한 것이 없고 딱 떨어짐
+==> DEPTN0 집계, JOB 소계 
+==> ROLLUP 지저분 -> CUBE 더 지저분 함
+
+
+# GROUP 함수 정리 -----------------------------------------------------------------------------
+
+- ROLLUP ( A,B,C ) :  전체 A , A&B, A&B&C   => 뒤에 하나씩 붙으면서 생성되는 조합
+- CUBE (A,B,C )     :  전체, A, B, C, A&B, A&C, B&C, A&B&C  => 모든 경우의 수
+- GROUPING SETS  : A, B, C => 원하는 것만!
+
+
+=그 외 함수 ======================================
+
+## 윈도우 함수
+
+- 전체테이블에서  작은 부분(윈도우/적은 수의 컬럼)를 만들어서 분석하고자 할 때
+- RDB 에서는 컬럼간의 연산,비교,연결, 집합에 대한 집계 쉬운편
+- 행과 행간의 관계정의, 비교, 연산은 어렵다 => 윈도우 함수
+- 중첩하여 사용하지 않는다.
+
+SELECT 윈도우함수( ) OVER   (   < 행을 분할 : RARTITION BY : GROUP BY 역활 > 
+                               < 행을 정렬 : ORDER BY      : ORDER BY 역활 >
+                               < 대상 범위 지정 : ROWS 또는 RANGE : WHERE 역활 >   )   
+
+--------------------------------------------------------------------------------------------
+
+SELECT ENAME, JOB, SAL
+FROM EMP
+ORDER BY JOB, SAL DESC ;
+
+각 직무별 급여의 누적 합을 구하는 컬럼을 생성
+
+SELECT ENAME,  JOB, SAL,  
+          SUM(SAL)  OVER (   
+                           PARTITION BY JOB
+                           ORDER BY SAL DESC
+                           ROWS UNBOUNDED PRECEDING ) AS SUM_SAL
+FROM  EMP 
+ORDER BY JOB ;
+
+---------------------------------------------------------------------------------------------
+
+## 순위함수
+- RANK 함수
+- DENSE_RANK 함수
+- ROW_NUMBER 함수
+
+## 윈도우 집계 함수
+- SUM, MAX, MIN, AVG, COUNT
+
+## 행 순서 함수
+- FIRST_VALUE 함수
+- LAST_VALUE 함수
+- LAG 함수
+- LEAD 함수
+
+## 비율 함수
+- RATIO_TO_REPORT 함수
+- PERCENT_RANK 함수
+- CUME_DIST 함수
+- NTILE 함수
+
+=============================================
+
+## 순위함수
+- RANK 함수
+- DENSE_RANK 함수
+- ROW_NUMBER 함수
+
+# RANK() ---------------------------------------------------
+
+- 일반적인 순위 함수 
+- 동점은 같은 등수, 다음 등수는 +N 
+- 1,2,3,3,5,6,
+- 윈도우 함수는 쿼리의 SELECT 목록에서만 허용됩니다. ( where 절 사용 불가 )
+
+SELECT ENAME, JOB, SAL, 
+         RANK() OVER ( ORDER BY SAL DESC ) AS RANK
+FROM  EMP ;
+
+SELECT ENAME, JOB, SAL, 
+         RANK() OVER (PARTITION BY JOB 
+                            ORDER BY SAL DESC ) AS RANK
+FROM  EMP ;
+
+급여순위 ( 직군별순위, 전체순위 )
+
+# DENSE_RANK() ----------------------------------------------
+
+- 동점은 같은 등수, 다음 등수는 +1
+- 등수가 건너뛰지 않는다. : 1,2,2,3,4,4,5
+
+SELECT ENAME, JOB, SAL, 
+         DENSE_RANK() OVER ( ORDER BY SAL DESC  ) AS RANK
+FROM  EMP ;
+
+# ROW_NUMBER() ---------------------------------------------------
+
+- 줄번호를 출력
+- 동점도 다른 등수
+
+SELECT ENAME, JOB, SAL, 
+         RANK()              OVER ( ORDER BY SAL DESC ) AS RANK,         
+         ROW_NUMBER() OVER ( ORDER BY SAL DESC ) AS ROW_NUMBER
+FROM  EMP ;
+
+SELECT ENAME, JOB, SAL, 
+         DENSE_RANK() OVER ( ORDER BY SAL DESC  ) AS RANK1,
+         RANK()              OVER ( ORDER BY SAL DESC ) AS RANK2,         
+         ROW_NUMBER() OVER ( ORDER BY SAL DESC ) AS ROW_NUMBER
+FROM  EMP ;
+
+
+----------------------------------------------------------------------------
+
+## 윈도우 집계 함수
+- SUM, MAX, MIN, AVG, COUNT
+
+같은 매니저를 둔 사원들 중에 급여의 최대값
+
+SELECT MGR, ENAME, SAL,
+       MAX(SAL) OVER ( PARTITION BY MGR ) AS MGR_MAX
+FROM EMP;
+
+같은 매니저를 둔 사원들의 평균 급여를 구하시오.
+단, 입사일순으로 정렬 후 자기 바로 앞뒤 사원의 급여만을 대상으로 한다.
+
+SELECT MGR, ENAME, HIREDATE, SAL,
+       AVG(SAL) OVER (PARTITION BY MGR 
+                             ORDER BY HIREDATE)
+FROM EMP;
+
+SELECT MGR, ENAME, HIREDATE, SAL,
+       AVG(SAL) OVER ( 
+                     PARTITION BY MGR 
+                     ORDER BY HIREDATE
+                     ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING  ) AS MGR_AVG
+FROM EMP;
+
+우리회사에서 나와 급여가 비슷한 사원의 수를 구하시오.
+내급여 +-200 
+
+SELECT ENAME, SAL,
+       COUNT(*) OVER ( 
+                     ORDER BY SAL
+                     RANGE BETWEEN 200 PRECEDING AND 200 FOLLOWING  ) AS SAME_COUNT
+FROM EMP;
+=> 나도 포함됨!
+----------------------------------------------------------------------------
+
+## 행 순서 함수
+- FIRST_VALUE 함수
+- LAST_VALUE 함수
+
+- LAG 함수
+- LEAD 함수
+
+
+#  FIRST_VALUE 함수 ----------------------------------------------------
+- 파티션의 처음 ROW의 컬럼의 값
+
+SELECT DEPTNO, ENAME, SAL,
+           FIRST_VALUE(ENAME) OVER (
+                 PARTITION BY DEPTNO
+                 ORDER BY SAL DESC
+                 ROWS UNBOUNDED PRECEDING ) AS FIRST_V
+FROM  EMP ;
+
+
+# LAST_VALUE 함수  ----------------------------------------------------
+
+SELECT DEPTNO, ENAME, SAL,
+          LAST_VALUE(ENAME) OVER (
+                   PARTITION BY DEPTNO
+                   ORDER BY SAL DESC
+                   ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) AS LAST_V
+FROM  EMP ;
+
+# LAG 함수  ----------------------------------------------------
+
+- 현재 행에서 이전 몇번째 행의 값  
+- SQL SERVER 지원안함
+
+- LAG(SAL)
+
+SELECT ENAME, HIREDATE, SAL, 
+          LAG(SAL) OVER (
+                  ORDER BY HIREDATE ) AS LAG_SAL
+FROM  EMP ;
+
+- LAG(SAL, 2) -> 두칸 위의 행의 값 출력
+
+SELECT ENAME, HIREDATE, SAL, 
+          LAG(SAL, 2) OVER (
+                  ORDER BY HIREDATE ) AS LAG_SAL
+FROM  EMP ;
+
+- LAG(SAL, 2, 500 ) -> 세번째 인수는 NULL일경우 대체할 값, NVL 함수의 느낌...**
+
+SELECT ENAME, HIREDATE, SAL, 
+          LAG(SAL, 2, 500 ) OVER (
+                  ORDER BY HIREDATE ) AS LAG_SAL
+FROM  EMP ;
+
+
+# LEAD 함수  ----------------------------------------------------
+
+-  현재 행에서 이후 몇번째 행의 값
+
+SELECT ENAME, HIREDATE, SAL, 
+          LEAD(SAL) OVER (
+                  ORDER BY HIREDATE ) AS LEAD_SAL
+FROM  EMP ;
+
+=> LAG 함수처럼 2번째 3번째 인수 사용가능
+
+--------------------------------------------------------------------------------
+
+## 비율 함수
+- RATIO_TO_REPORT 함수
+- PERCENT_RANK 함수
+- CUME_DIST 함수
+- NTILE 함수
+
+
+#  RATIO_TO_REPORT 함수  --------------------------------------------
+
+- 전체에서 현재행의 백분율을 소수점으로 구함
+- 결과 값은 > 0 & <= 1 의 범위 
+- 개별 RATIO 의 합을 구하면 1 이 된다.
+- RATIO_TO_REPORT 대신  서브쿼리를 사용가능 => 복잡함
+
+SELECT ENAME, JOB, SAL,
+           RATIO_TO_REPORT(SAL) OVER()    AS R_R
+FROM EMP ;
+
+-- 서브쿼리로
+SELECT ENAME, JOB, SAL,
+           SAL / ( SELECT SUM(SAL) FROM EMP )    AS R_R
+FROM EMP ;
+
+- SALESMAN이 JOB 인 사원들을 대상으로 전체 급여에서 본인이 차지하는 비율
+
+SELECT ENAME, JOB, SAL,
+           ROUND ( RATIO_TO_REPORT(SAL) OVER()  , 2 ) AS R_R
+FROM EMP 
+WHERE JOB = 'SALESMAN';
+
+
+# PERCENT_RANK 함수  -----------------------------------------------------
+
+- 파티션별 윈도우에서 제일 먼저 나오는 것을 0으로, 제일 늦게 나오는 것을 1로 하여, 
+  구간의 순서별 백분율을 구함
+- 값이 같으면 같은 비율로 표현
+- 결과 값은 >= 0 & <= 1 의 범위 
+- 전체에서 본인이 순서상 몇번째 위치쯤에 있는지 확인 가능 
+- SQL Server에서는 지원하지 않는 함수 
+
+** 행이 3개면 2개로 짤라야 한다.  1/2 = 0.5  => 0 , 0.5, 1
+** 행이 4개면 3개로 짤라야 한다.  1/3 = 0.33 => 0, 0.33, 0.66, 1
+** 행이 5개면 4개로 짤라야 한다.  1/4 = 0.25 => 0, 0.25, 5, 0.75, 1
+
+SELECT DEPTNO, ENAME, SAL,
+           PERCENT_RANK() OVER ( 
+                 PARTITION BY DEPTNO 
+                 ORDER BY SAL DESC ) AS P_R
+FROM EMP ;
+
+*****
+DELETE FROM EMP
+WHERE ENAME ='SCOTT';
+
+ROLL BACK;
+
+위 SELECT 코드 실행 => 결과 확인 => ROLL BACK;
+*****
+
+# CUME_DIST 함수  ------------------------------------------------------------
+
+- 파티션별 윈도우 전체건수에서 현재 행보다 작거나 같은 건수에 대한 누적백분율
+- 0 < 결과값 <= 1   :  0 이 나올 수 없다!!
+
+- 같은 JOB을 가진 사원들의 집합에서 본인의 급여가 
+  누적 순서상 몇번째 위치쯤에 있는지 0과 1사이의 값으로 출력
+
+SELECT DEPTNO, ENAME, SAL,
+           CUME_DIST() OVER ( 
+                 PARTITION BY DEPTNO 
+                 ORDER BY SAL DESC ) AS CUME_DIST
+FROM EMP ;
+
+- 반올림 처리
+SELECT DEPTNO, ENAME, SAL,
+           ROUND( CUME_DIST()   OVER ( 
+                 PARTITION BY DEPTNO 
+                 ORDER BY SAL DESC ) , 3 )  AS CUME_DIST
+FROM EMP ;
+
+# NTILE 함수  --------------------------------------------------------------------------
+
+- N 등분하여 그룹으로 분류 .
+
+SELECT ENAME, SAL,
+       NTILE(4) OVER ( ORDER BY SAL DESC ) AS NTILE
+FROM EMP;
+
+=> 14행 / 4 = 3.2 
+=> 몫인 3행 씩 나눈 다음 나머지는 앞 조부터 할당한다.
+
+
+# listagg 함수-------------------------------------------------------------------
+
+select deptno,
+       listagg(ename, ', ')
+       within group(order by sal desc) as enames
+from emp
+group by deptno;
+
+=>
+deptno	enames
+10	KING, CLARK, MILLER
+20	FORD, JONES, SMITH
+30	BLAKE, ALLEN, TURNER, MARTIN, WARD, JAMES
+
+
+특정 column으로 윈도우=> partition
+특정 row로         원도우=> range 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

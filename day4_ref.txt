@@ -1,0 +1,184 @@
+## DDL 
+- 데이터 정의어 => DBA 주로 사용, 
+- CREATE , ALTER, DROP, TRUNCATE,.... 
+
+# 오라클 데이터 타입 
+- 20여가지
+- 문자, 숫자, 날짜 
+
+# 문자 
+- CHAR(N)
+  - 고정길이 문자타입 / 최대  2000 BYTE / 기본 1 BYTE
+  - 예 ) 학번, 사번, 성별, 유무 ...../ 하나의 문자값 저장할 경우 주로 사용
+
+- VARCHAR2(N) = VARCHAR(N)
+   - 가변길이 문자타입 / 최대 4000 BYTE / 기본 1 BYTE
+   - 예) 이름, 글제목, 설명,.... 
+
+- LONG
+  - 사용자제
+  - 최대 2G
+  - 한 레코드 1개만 지정가능 
+
+- CLOB 
+  - LONG 대신에 사용 권장 
+  - 최대 4G
+
+# 숫자 
+- 정수  : NUMBER( 자릿수 ) 
+  - 가격   	   NUMBER(7)  : 0 ~ 9,999,999 
+  - 부서번호 NUMBER(2)  : 0 ~ 99 
+
+- 실수 : NUMBER( 전체자릿수,  소숫점이하자릿수 )
+   - 평균 	    NUMBER( 5,2) : 0.00 ~ 999.99 
+   - 할인율    NUMBER( 2,2) : 0.00 ~ 0.99
+   - 할인율    NUMBER( 3,2) : 0.00 ~ 9.99
+
+# 날짜 
+- DATE
+  - 세기, 년, 월, 일, 시, 분, 초 
+  - 예) 생일, 기념일,....
+
+- TIMESTAMP
+  - 세기, 년, 월, 일, 시, 분, 초, 초의 밀리세컨단위  
+  - 로그성 날짜 
+
+==============================================
+
+# 테이블 생성 
+- CREATE 문 
+- CREATE TABLE 테이블명 ( 컬럼명 타입(크기), ....... ) ; 
+
+CREATE TABLE ST_DEPT (
+   DEPT_NO 	NUMBER(2), 
+   DEPT_NAME	VARCHAR2(30)
+);
+
+CREATE TABLE ST (
+  S_NO		CHAR(8)       ,
+  S_NAME		VARCHAR2(30)    ,
+  GENDER		CHAR
+); 
+
+---------------------------------------------------------------------------
+# 테이블 구조 수정 
+- ALTER 
+  - ADD : 컬럼 추가
+  - MODIFY : 컬럼 타입, 크기 수정 
+  - DROP : 컬럼 삭제 
+  - RENAME COLUMN : 컬럼명 변경 
+
+** 오라클의 경우 영타,숫자, 특수문자  => 1BYTE, 한글 => 3BYTE 
+
+- 컬럼 추가 ( BIRTH, EMAIL 추가 ) 
+- 스키마 뒷쪽에 컬럼이 추가
+
+ALTER TABLE ST 
+ ADD ( BIRTH   DATE, 
+          EMAIL   VARCHAR2(100)   ) ;
+
+DESC ST;   -- 테이블이 구조
+
+- 수정 ( S_NAME(30) => 50 변경 )
+
+ALTER TABLE ST 
+  MODIFY( S_NAME   VARCHAR2(50 )) ;
+
+- DROP : 컬럼 삭제 
+- 생일, 이메일 컬럼 삭제 
+
+ALTER TABLE ST
+  DROP ( BIRTH, EMAIL ) ; 
+
+- 컬럼이름 변경 
+
+ALTER TABLE ST
+ RENAME COLUMN GENDER TO S_GENDER ;
+
+---------------------------------------------------------------------------------
+
+# 테이블 삭제 
+- DROP TABLE 테이블명 
+
+INSERT INTO ST VALUES ( 10, 'AAA', 'F' );
+INSERT INTO ST VALUES ( 20, 'BBB', 'F' );
+INSERT INTO ST VALUES ( 30, 'DDD', 'M' );
+INSERT INTO ST VALUES ( 40, 'DDD', 'M' );
+
+DROP TABLE ST ; 
+==> 입력자료, 테이블스키마 => 모두 삭제 
+
+TRUNCATE TABLE ST ;
+==> 입력자료만 삭제 , 스키마 존재 
+
+================================================
+
+# 자료 삭제 
+      	   명령어구분    로그유무    취소여부     기능	
+----------------------------------------------------------------------------------
+DELETE	     DML          YES            YES  	원하는 ROW 삭제
+DROP           DDL           NO            NO	자료+스키마 삭제
+TRUNCATE    DDL           NO            NO	자료만 삭제
+----------------------------------------------------------------------------------
+
+================================================
+
+# 테이블 생성 : 제약조건 추가 
+
+- P : PRIMARY KEY : 기본키 : NOT NULL, UNIQUE
+- R : REFERENCES : 외래키 : 참조테이블의 PK중에 하나 또는 널 가능
+- U : UNIQUE : 중복불가 
+- C : CHECK ( 조건식 ... ) : 조건식에 참인 것만 입력 가능 
+- C : NOT NULL 
+
+- DEFAULT : 기본값 : 널이 입력되면 기본으로 전달해줄 값 
+
+부서(부서번호, 부서명)
+사원(사번, 이름, 생일, 성별, 이메일, 월급, 입사일, 근무부서 )
+
+CREATE TABLE 부서 (
+  부서번호  NUMBER(2) 	PRIMARY KEY ,
+  부서명     VARCHAR2(100) 	NOT NULL 
+);
+
+CREATE TABLE 사원 (
+  사번 	CHAR(8) 		PRIMARY KEY, 
+  이름       VARCHAR2(50)	NOT NULL,
+  생일       DATE,
+  성별       CHAR(1)      	CHECK ( 성별 IN ( 'F','M')) ,
+  이메일    VARCHAR2(100)    NOT NULL UNIQUE , 
+  입사일    DATE 		DEFAULT SYSDATE,
+  근무부서  NUMBER(2)          REFERENCES 부서(부서번호)
+);
+
+INSERT INTO 부서 VALUES ( 10, '기획부' ) ; 
+==> unique constraint (ST40.SYS_C00519049) violated
+
+INSERT INTO 부서 VALUES ( 20, NULL  ) ; 
+==> cannot insert NULL into ("ST40"."부서"."부서명")
+
+ST40.SYS_C00519049  => 유저.제약조건이름
+
+# 제약조건 확인 
+- 딕셔너리 : 오라클이 만들고 유지 관리하는 것 
+- 제약조건 딕셔너리 : USER_CONSTRAINTS
+
+SELECT * 
+FROM  USER_CONSTRAINTS  
+WHERE TABLE_NAME = '부서' ; 
+
+----------------------------------------------------------------------------------
+
+INSERT INTO 사원 VALUES ( 111, 'AAA', '2000-10-10', 'F','A@NAVER.COM','2010-01-01', 10) ;
+
+INSERT INTO 사원 VALUES ( 222, 'BBB', '2000-10-10', 'A','A@NAVER.COM','2010-01-01', 10) ;
+==> check constraint (ST40.SYS_C00519096) violated
+
+INSERT INTO 사원 VALUES ( 333, 'BBB', '2000-10-10', 'F','C@NAVER.COM','2010-01-01', 50) ;
+==> integrity constraint (ST40.SYS_C00519099) violated - parent key not found
+
+SELECT * 
+FROM  USER_CONSTRAINTS  
+WHERE TABLE_NAME = '사원' ; 
+
+---------------------------------------------------------------------------------

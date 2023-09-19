@@ -1,0 +1,134 @@
+< SQL 그룹 함수 실습문제  >
+ 
+EX1. 모든 사원의 급여 최고액, 최저액, 총액 및 평균액을 표시합니다. 
+      열 레이블을 각각 Maximun, Minimum, Sum 및 Average로 지정하고 
+      결과를 정수로 반올림하는 질의를 작성하시오.
+
+SELECT  MAX(salary) AS "Maximum", 
+           MIN(salary) AS "Minimum", 
+           SUM(salary) AS "Sum", 
+           ROUND(AVG(salary),0) AS "Average"
+FROM EMP  ;
+
+
+------------------------------------------------------------------------------------
+EX2. 각 직무에 대한 급여 최저액, 최고액, 총액 및 평균액을 표시하도록 한다.
+
+SELECT  	job_id, 
+	MAX(salary) AS "Maximum", 
+	MIN(salary) AS "Minimum", 
+	SUM(salary) AS "Sum", 
+	ROUND(AVG(salary), 2) AS "Average"
+FROM   	EMP
+GROUP BY job_id  ;
+
+
+-------------------------------------------------------------------------------------
+EX3. 직무가 동일한 사원의 수를 표시하는 질의를 작성하시오.
+
+SELECT 	   job_id, COUNT(*)
+FROM 	   EMP
+GROUP BY  job_id  ;
+
+
+-------------------------------------------------------------------------------------
+EX4. 관리자 목록 중복 없이 관리자 수만 표시하고 열 레이블을 
+       Number of Managers로 지정합니다.
+
+SELECT COUNT(DISTINCT MANAGER_ID) AS "Number of Managers"
+FROM EMP  ;
+
+
+-------------------------------------------------------------------------------------
+EX5. 최고 급여와 최저 급여의 차액을 표시하는 질의를 작성하고 
+      열 레이블을 DIFFERENCE로 지정하시오.
+
+SELECT MAX(salary) - MIN(salary) AS "DIFFERENCE"
+FROM EMP  ;
+
+
+-------------------------------------------------------------------------------------
+EX6. 관리자 번호 및 해당 관리자에 속한 사원의 최저 급여, 인원수를 표시합
+      니다. 
+      관리자를 알 수 없는 사원 및 최저 급여가 $5000 미만인 그룹 제외시키고
+      급여를 기준으로 출력 결과를 내림차순으로 정렬하시오.
+
+SELECT 		MANAGER_ID, MIN(salary), count(*) 
+FROM 		EMP
+WHERE 		MANAGER_ID IS NOT NULL
+GROUP BY 	MANAGER_ID
+HAVING 		MIN(salary) >= 5000  
+ORDER BY 	MIN(salary) DESC  ;
+
+
+-------------------------------------------------------------------------------------
+EX7. 부서별 직무별 인원수 및  평균급여를 표시하는 질의를 작성하시오.
+       단, 평균 급여를 소수점 둘째 자리에서 반올림한다. 
+       부서번호 순으로 정렬하고 부서가 같으면 평균급여가 높은 직무순으로
+       정렬하시오.
+
+select department_id
+        ,job_id
+        ,count(*) as "인원수"
+        ,round(avg(salary), 1) as "평균급여"
+from emp
+group by department_id, job_id
+order by department_id, avg(salary) desc;
+
+
+SELECT        DEPARTMENT_ID, 
+                 JOB_ID,  
+                 count(*) as headcount , 
+                 ROUND(AVG(salary), 1) AS avg_salary
+FROM  	   EMP 
+GROUP BY  DEPARTMENT_ID, JOB_ID 
+ORDER BY  1, 4 desc ;
+
+
+-------------------------------------------------------------------------------------
+EX8. 총 사원의 수 및 2002,2003, 2004,2005년에 입사한 사원 수를 표시하는
+      질의를 작성하고 적합한 열 머리글을 지정합니다.
+
+출력 예 )
+ 
+TOTAL      2002     2003     2004    2005
+107	      7          6        10       29
+
+
+select count(*) as "TOTAL"
+        ,sum(decode(to_char(hire_date, 'yyyy'), 2002, 1, 0)) as "2002"
+        ,sum(decode(to_char(hire_date, 'yyyy'), 2003, 1, 0)) as "2003"
+        ,sum(decode(to_char(hire_date, 'yyyy'), 2004, 1, 0)) as "2004"
+        ,sum(decode(to_char(hire_date, 'yyyy'), 2005, 1, 0)) as "2005"
+from emp;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT   COUNT(*) AS "TOTAL",
+            SUM( DECODE(TO_CHAR(HIRE_DATE, 'YYYY'), 2002, 1, 0) ) AS "2002",
+            SUM( DECODE(TO_CHAR(HIRE_DATE, 'YYYY'), 2003, 1, 0) ) AS "2003",
+            SUM(DECODE(TO_CHAR(HIRE_DATE, 'YYYY'), 2004, 1, 0)) AS "2004",
+            SUM(DECODE(TO_CHAR(HIRE_DATE, 'YYYY'), 2005, 1, 0)) AS "2005"
+FROM 	EMP   ;
+
+SELECT   COUNT(*) AS "TOTAL",
+            SUM ( CASE TO_CHAR(HIRE_DATE, 'YYYY')  WHEN '2002' THEN 1 ) AS "2002",
+            SUM ( CASE TO_CHAR(HIRE_DATE, 'YYYY')  WHEN '2003' THEN 1 ) AS "2003",
+            SUM ( CASE TO_CHAR(HIRE_DATE, 'YYYY')  WHEN '2004' THEN 1 ) AS "2004",
+            SUM ( CASE TO_CHAR(HIRE_DATE, 'YYYY')  WHEN '2005' THEN 1 ) AS "2005" 
+FROM 	EMP   ;

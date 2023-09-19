@@ -1,0 +1,304 @@
+ID: st04
+PW: st04
+host name : 125.141.133.87
+port : 1521
+SID 접속식별자 : xe
+----------------------------------------------------------
+
+--EMP schema 스키마
+EMPLOYEE_ID	사번
+FIRST_NAME
+LAST_NAME
+EMAIL
+PHONE_NUMBER
+HIRE_DATE           입사일
+JOB_ID		직군
+SALARY
+COMMISSION_PCT	수당률,판매직
+MANAGER_ID	직속상관 사번
+DEPARTMENT_ID	부서부서 번호
+---------------------------------------------------------
+
+# SQL day 2------------------------------------------------
+정렬
+쿼리문의 마지막 기술
+order by 컬럼명, 컬럼명[옵션],.....
+order by 컬럼명, 인덱스[옵션],.....=>사용 빈도 높음
+실행속도 악영향!!(정렬은 연산 리소스 높음) 
+->오름차순: 기본 asc
+->내림차순: desc
+
+select last_name, hire_date
+from emp
+where hire_date < '05/01/01'
+order by hire_date;
+
+select last_name, hire_date
+from emp
+where hire_date < '05/01/01'
+order by hire_date desc;
+
+인덱스: 1,2,3.....
+select last_name, hire_date
+from emp
+where hire_date < '05/01/01'
+order by 2;
+
+부서번호(오름), 월급(내림), 이름(오름)순으로 검색
+select last_name, DEPARTMENT_ID, saladry
+from emp
+order by 2, 3 desc, 1;
+
+# 쿼리 실행 순서
+from -> where -> select -> order by
+from -> where -> group by -> having -> select
+-> order by
+
+--이 외에 자주 사용되는 연산자
+- between 값1 and 값2
+- in
+- like
+- is NULL
+- not
+
+--between 값1 and 값2 범위 검색
+-값1: 최소값, 값2: 최대값
+-값1, 값2 모두 포함
+10000~15000 사이의 사원명과 급여
+select last_name, salary
+from emp
+where salary between 10000 and 15000;
+where salary not between 10000 and 15000;
+
+-- in
+- 목록에서 비교
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID =60 or DEPARTMENT_ID =30;
+
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID in(60, 30);
+where DEPARTMENT_ID not in(60, 30);
+
+--like
+-패턴 검색, 문자 검색에 사용
+-% : 여러문자
+-_ : 한 문자 대신
+select last_name, email
+from emp
+where email like 'S%' ;
+where email not like 'S%' ;
+
+select last_name, email
+from emp
+where email like '%S% or email like '%k%' ;
+
+select last_name, email
+from emp
+where email like '____' ;
+
+select last_name, email
+from emp
+where email like 'S_I%' ;
+
+--is (=)
+-null 값 비교시 is 연산자 사용
+
+select last_name, salary, COMMISSION_PCT
+from emp
+where COMMISSION_PCT is null;
+where COMMISSION_PCT is not null;
+
+##함수
+- 기능 수행 명령문
+- 함수명(인수, 인수...) 인수 개수는 함수에 따라 다름
+
+#함수: 단일행 함수, 다중행 함수
+-단일행 함수: 하나의 행에 대한 컬럼값 처리
+-다중행 함수: 여러행의 컬럼값 처리
+
+#문자 단일행 함수
+-대문자(upper), 소문자(lower), 첫문자만 대문자(initcap)
+
+select upper(email), lower(email), initcap(email)
+from emp;
+
+-SKING검색
+-where절에서 컬럼은 인덱스 역할
+
+select email, last_name, salary
+from emp
+where email = upper('sking');  대문자로 sking 조건검색
+(where의 인덱스==email) 풀 스캔 방지
+
+# length
+-컬럼의 길이-> 숫자(byte==8bit)
+-영문자, 한글, 특수문자, 공백, 숫자 모두 1자 원칙
+
+select email, length(email)
+from emp;
+
+select length('12가나다$%^&* 7')
+from dual;
+(dual: 임시 테이블)
+
+select sysdate
+from dual;
+
+#substr
+-문자 컬럼의 일부 문자만 가져오기
+-substr(컬럼명, 시작위치, 가져올 문자개수)
+
+select email, substr(email, 1, 2), substr(email, -2)
+from emt;
+
+주민번호만 남자만 검색
+select *
+from emp
+where substr(주민번호, 8, 1) in ('1', '3');
+where substr(주민면호, 3, 2) = '07'
+
+select PHONE_NUMBER
+from emp
+where substr(PHONE_NUMBER, 2, 1) in ('5', '1');
+
+#instr(컬럼명, 문자, 시작위치, 몇번째)
+-해당 문장의 시작 인덱스
+-찾는 문자가 없으면 '0'리턴
+
+select email, instr(email, 'S')
+from emp;
+
+select email, instr(email, 'S', 1, 2)
+from emp;
+
+#문제
+job_id컬럼에서 '_'이 후 두 문자 추출
+select job_id, substr(job_id, instr(job_id, '_'), 2)
+from emp;
+
+select job_id, substr(job_id, instr(job_id, '_'), -2)
+from emp;
+
+select job_id, 
+       substr(job_id, instr(job_id, '_'), 2) as "_뒷문자",
+       substr(job_id, 1, instr(job_id, '_')) as "_앞문자"
+from emp;
+
+select job_id, 
+       substr(job_id, instr(job_id, '_')+1) as "_뒷문자",
+       substr(job_id, 1, instr(job_id, '_')-1) as "_앞문자"
+from emp;
+
+# LPAD(컬럼명, 전체사이즈, 채울문자)
+   RPAD(컬럼명, 전체사이즈, 채울문자)
+select salary, LPAD(salary, 12, '-')
+from emp;
+
+#이메일
+email SKING => SKi**
+
+select email, 
+        RPAD(substr(email, 1, 3), length(email), '*')
+from emp;
+
+select email,  substr(email, 1, 3), length(email), 
+	RPAD(substr(email, 1, 3), length(email), '*')
+from emp;
+
+#trim(컬럼명)
+-문자열의 앞뒤 공백 제거
+-문자열 사이의 공백 유지
+
+select trim('  Abfe  frge  ') from dual;
+
+select trim('A' from 'Abfe  frAe  ') from dual;
+
+------------------------------------------------------------
+## 숫자함수
+
+#round(컬럼명, 소수점 이하 표현 자릿수)
+-반올림
+0: 정수부분만 출력
+
+select round(123.4567, 0) from dual;    123
+select round(123.4567, -1) from dual;   120
+select round(123.4567, 2) from dual;    123.5
+
+#trunc(컬럼명, 소수점 이하 표현 자릿수)
+select trunc(123.4567, 0) from dual;     123
+select trunc(123.4567, -1) from dual;    120
+select trunc(123.4567, 2) from dual;      123.45
+
+## 날짜함수
+-날자: 세기, 년, 월, 일, 시, 분, 초
+-날자 연산 가능 : 일일 덧셈, 뺄셈
+select hire_date from emp;
+select hire_date, hire_date+10 from emp;
+select hire_date, hire_date+10, hire_date+20 from emp;
+
+select trunc(sysdate-to_date('1976-07-13', 'yyyy-mm-dd')) as 생존
+from emp;
+
+-add_months(월 가산)
+select hire_date, add_months(hire_date, 3) from emp;
+
+# next_day
+-next_day(날자, '요일') ==> 다음 요일의 날자 리턴
+요일: 일(1), 월(2), 화(3), 수(4), 목(5), 금(6), 토(7)
+
+select sysdate, next_day(sysdate, 4) from dual;
+
+#last_day
+-해당 날자 정보의 마지막 날자
+
+select hire_date, last_day(hire_date) from emp;
+
+# 날자 round, trunc
+-round(날자컬럼, 기준)
+-기준: yy, mm, dd
+
+날자 반올림
+select hire_date, round(hire_date, 'mm') from emp;
+년 반올림
+select hire_date, round(hire_date, 'yy') from emp;
+
+select hire_date, trunc(hire_date, 'mm') from emp;
+
+# extract (요소 from 날자컬럼)
+-요소: year, month, day
+
+select last_name, hire_date
+from emp
+where extract(year from hire_date) =2005;
+
+where extract(month from hire_date)=05;
+------------------------------------------------------------
+
+## 형 전환 함수
+-to_char(
+ to_char(
+
+select sysdate, to_char(sysdate, 'yy-mm-dd') from dual;
+=>23-07-14
+select sysdate, to_char(sysdate, 'hh:mi:ss') from dual;
+=>23:07:14
+
+select salary, to_char(salary, '$999,999')
+from emp;
+
+
+-to_date('문자', '날자패턴')
+ to_date('2000-10-10', 'yy/mm/dd')
+
+select salary, to_char(salary, '$999,999')
+from emp;
+=>   $24,000
+select salary, to_char(salary, 'L999,999')
+from emp;
+=>   ￦24,000
+select salary, to_char(salary, 'L9,999')
+from emp;
+=>  $4,800
+      자릿수가 모자르면 ##########

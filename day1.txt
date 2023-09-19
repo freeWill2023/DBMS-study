@@ -1,0 +1,149 @@
+ID: st04
+PW: st04
+host name : 125.141.133.87
+port : 1521
+SID 접속식별자 : xe
+
+
+
+--EMP schema 스키마
+EMPLOYEE_ID	사번
+FIRST_NAME
+LAST_NAME
+EMAIL
+PHONE_NUMBER
+HIRE_DATE           입사일
+JOB_ID		직군
+SALARY
+COMMISSION_PCT	수당률,판매직
+MANAGER_ID	직속상관 사번
+DEPARTMENT_ID	부서부서 번호
+
+
+
+# SQL day 1----------------------------------------------------------------
+SQL
+-DDL : 정의어
+-DML: 조작어
+-DCL: 제어어
+-DQL: 검색어
+
+# select 컬럼명,.....
+from 테이블명 ;
+where 조건문 and 조건문 or...
+group by 컬럼명,...
+having 조건명 and 조건명
+order by 커럼명 ----------------------정렬
+
+대소문자 구분 없음.
+
+select
+- 컬럼명
+- * : 모든 컬럼
+- 수식
+- 함수
+- 서브 쿼리
+- distinct (중복제거)
+- AS 별칭
+- || : 결합 연산자
+
+
+* hr 유저의 emp테이블을 복사
+create table emp
+as
+select * from hr.emp;
+
+* emp 테이블 전체 내용 확인
+select * from emp;       ctrl+enter
+
+desc emp; 각 column명
+
+--원하는 컬럼 검색
+select last_name, salary 
+from emp;
+
+--수식 넣기
+select last_name, salary, salary*2
+from emp;
+
+--컬럼 명칭
+select last_name, salary, salary*2 as bonus
+from emp;
+
+select last_name,
+         salary as 월급,
+         salary*2 as bonus
+from emp;
+
+--as 생략가능
+select last_name,
+         salary 월급,
+         salary*2 bonus
+from emp;
+
+--distinct : 인스턴드 중복값 제거/생략
+select DEPARTMENT_ID from emp;
+
+select distinct DEPARTMENT_ID from emp;
+
+-- || : 결합 연산자 사용
+select FIRST_NAME, LAST_NAME, salary
+from emp;
+select FIRST_NAME || LAST_NAME, salary
+from emp;
+select FIRST_NAME ||' '|| LAST_NAME, salary
+from emp;
+select FIRST_NAME ||' '|| LAST_NAME as 이름,
+         salary
+from emp;
+
+# 조건 검색
+--where 조건문
+-조건문 : 좌항(컬럼명)  비교연산 우항(수식)
+ ==> 조건식 만족 행만 추출
+-비교연산자 : >=, <, >, =, !=(<>)
+
+--숫자 조건 검색 : 숫자만 기입 가능
+--월급 10,000이상 사원 이름, 월급
+select last_name, salary
+from emp
+where salary >= 10000;
+
+--월급 10,000이상~15,000이하 범위 사원 이름, 월급
+select last_name, salary
+from emp
+where salary >= 10000 and salary <=15000;
+
+--60부서에 근무자
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID =60;
+
+--60부서나 30부서에 근무자
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID =60 or DEPARTMENT_ID =30;
+
+--문자 조건 검색
+-'문자 또는 문자열' 로 감싼다.
+ 문자열은 대소문자 구분
+
+이메일이 sking인 사람의 이름, 월급, 입사일 검색
+select last_name, salary, hire_date
+from emp
+where email = 'SKING' ;
+
+--날자 조건 검색
+날짜: 세기, 년, 월 ,일, 시, 분, 초 =>7가지 정보
+서버 셋팅시 표시형식 지정 가능
+emp 날자 표기 : yy/mm/dd
+날자는 ''으로 감싼다.
+select last_name, hire_date
+from emp
+where hire_date < '2005/01/01';
+
+함수(인수,...) 인수값으로 날자를 인식 못하는 경우
+=> to_date(05/01/01, YY/MM,DD)
+=> to_date(2005/01/01, YYYY/MM,DD)
+
+

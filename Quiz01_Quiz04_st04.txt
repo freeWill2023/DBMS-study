@@ -1,0 +1,37 @@
+Quiz.01-----------------------------------------------------------------------
+select empno, 
+       RPAD(substr(empno,1,2), length(empno), '*') as masking_empno,
+       substr(ename, 1, 5) as ename,
+       RPAD(substr(ename, 1, 1), length(ename), '*') as masking_ename
+from emp
+order by 3;
+
+
+Quiz.02-----------------------------------------------------------------------
+select empno, ename, sal,
+       trunc(sal/21.5, 2) as day_pay,
+       round(sal/(21.5*8), 1)
+from emp;
+
+
+Quiz.03------------------------------------------------------------------------
+select empno, ename, 
+       to_char(hiredate, 'yyyy/mm/dd') as hairdate,
+       to_char(add_months(hiredate, 3), 'yyyy/mm/dd') as r_job,
+       case
+        when comm is null then 'N/A'
+        when comm is not null then to_char(comm)
+       end as comm
+from emp;
+
+Quiz.04------------------------------------------------------------------------
+select empno, ename, mgr,
+       case
+        when mgr is null then '0000'
+        when RPAD(mgr, 2)=75 then '5555'
+        when RPAD(mgr, 2)=76 then '6666'
+        when RPAD(mgr, 2)=77 then '7777'
+        when RPAD(mgr, 2)=78 then '8888'
+        when mgr is not null then to_char(mgr)
+       end as chg_mgr
+from emp;

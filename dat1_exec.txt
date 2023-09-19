@@ -1,0 +1,61 @@
+create table emp
+as
+select * from hr.emp;
+
+select * from emp;
+
+desc emp;
+
+--원하는 컬럼 검색
+select last_name, salary from emp;
+
+--수식 넣기
+select last_name, salary, salary*2
+from emp;
+
+--컬럼 명칭
+select last_name, salary, salary*2 as bonus
+from emp;
+
+select last_name, salary as 월급, salary*2 as bonus
+from emp;
+
+select last_name, salary 월급, salary*2 bonus
+from emp;
+
+select DEPARTMENT_ID from emp;
+select distinct DEPARTMENT_ID from emp;
+
+-- || : 결합 연산자 사용
+select FIRST_NAME, LAST_NAME, salary
+from emp;
+
+-- || : 결합 연산자 사용
+select FIRST_NAME || LAST_NAME, salary
+from emp;
+select FIRST_NAME ||' '|| LAST_NAME, salary
+from emp;
+select FIRST_NAME ||' '|| LAST_NAME as 이름,
+       salary
+from emp;
+
+--월급 10,000이상 사원 이름, 월급
+select last_name, salary
+from emp
+where salary >= 10000;
+
+select last_name, salary
+from emp
+where salary >= 10000 and salary <=15000;
+
+--60부서에 근무자
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID =60;
+
+--60부서나 30부서에 근무자
+select last_name, DEPARTMENT_ID
+from emp
+where DEPARTMENT_ID =60 or DEPARTMENT_ID =30;
+
+exit;
